@@ -1,0 +1,47 @@
+backend/
+│
+├── server.js
+├── socket/
+│   ├── socketHandler.js
+│   ├── gameEvents.js
+│   ├── drawingEvents.js
+│   └── chatEvents.js
+│
+├── rooms/
+│   ├── roomManager.js
+│   ├── publicRoomManager.js
+│   └── privateRoomManager.js
+│
+├── game/
+│   ├── gameLoop.js
+│   ├── scoreManager.js
+│   ├── wordManager.js
+│   ├── timerManager.js
+│   └── turnManager.js
+│
+├── utils/
+   ├── generateRoomCode.js
+   └── words.js
+
+
+   frontend/
+│
+├── src/
+│   ├── pages/
+│   │   ├── Home.jsx
+│   │   ├── Lobby.jsx
+│   │   └── GameRoom.jsx
+│   │
+│   ├── components/
+│   │   ├── Canvas.jsx
+│   │   ├── Chat.jsx
+│   │   ├── PlayerList.jsx
+│   │   ├── ScoreBoard.jsx
+│   │   ├── WordSelection.jsx
+│   │   └── Toolbar.jsx
+│   │
+│   ├── socket/
+│   │   └── socket.js
+│   │
+│   ├── context/
+        └── GameContext.jsx
