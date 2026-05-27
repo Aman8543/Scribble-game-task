@@ -31,7 +31,7 @@ function GameRoom() {
   const [hint,setHint] = useState("");
   const {
     roomId,
-
+    
     players,
     setPlayers,
 
@@ -87,11 +87,15 @@ function GameRoom() {
   // =========================
   // PLAYER ROLES
   // =========================
-  const isDrawer =
-    socket.id ===
-    currentDrawerId;
+  // const isDrawer =
+  //   socket.id ===
+  //   currentDrawerId;
 
-    console.log("drawer",isDrawer);
+  const isDrawer =
+  socket.id === currentDrawerId;
+  
+
+    console.log("drawer",isDrawer,"socket.id",socket.id,"currentDrawerId",currentDrawerId);
 
   const isHost =
     players[0]?.name ===
@@ -100,40 +104,49 @@ function GameRoom() {
   // =========================
   // SOCKET EVENTS
   // =========================
-  useEffect(() => {
-    
-    // INITIAL STATUS
-    setConnected(
-      socket.connected
-    );
+ useEffect(() => {
 
-    // CONNECT
-    socket.on(
-      "connect",
-      () => {
+  // REMOVE OLD LISTENERS FIRST
+  socket.off("connect");
+  socket.off("disconnect");
+  socket.off("players");
+  socket.off("timerUpdate");
+  socket.off("yourTurn");
+  socket.off("newDrawer");
+  socket.off("wordChoices");
+  socket.off("wordSelected");
+  socket.off("clearWord");
+  socket.off("roundUpdate");
+  socket.off("gameEnded");
 
-        setConnected(true);
+  setConnected(socket.connected);
 
-      }
-    );
+  // CONNECT
+  const onConnect = () => {
 
-    // DISCONNECT
-    socket.on(
-      "disconnect",
-      () => {
-
-        setConnected(false);
-
-      }
-    );
-
-    // PLAYERS
-   socket.on(
-  "players",
-  (updatedPlayers) => {
+    setConnected(true);
 
     console.log(
-      "Updated Players:",
+      "CONNECTED:",
+      socket.id
+    );
+
+  };
+
+  // DISCONNECT
+  const onDisconnect = () => {
+
+    setConnected(false);
+
+  };
+
+  // PLAYERS
+  const onPlayers = (
+    updatedPlayers
+  ) => {
+
+    console.log(
+      "PLAYERS:",
       updatedPlayers
     );
 
@@ -143,13 +156,10 @@ function GameRoom() {
 
     setRoomLoaded(true);
 
-  }
-);
+  };
 
-    // TIMER
-    socket.on(
-  "timerUpdate",
-  ({
+  // TIMER
+  const onTimerUpdate = ({
     time,
     hint
   }) => {
@@ -158,194 +168,236 @@ function GameRoom() {
 
     setHint(hint);
 
-  }
-);
-    // WORD FOR DRAWER
-    socket.on(
-      "yourTurn",
-      (newWord) => {
+  };
 
-        setWord(newWord);
-
-      }
-    );
-
-    // DRAWER INFO
-    socket.on(
-      "newDrawer",
-      ({
-        name,
-        id
-      }) => {
-
-        setDrawer(name);
-
-        setCurrentDrawerId(id);
-
-      }
-    );
-
-    // WORD CHOICES
-    socket.on(
-      "wordChoices",
-      (choices) => {
-
-        setWordChoices(
-          choices
-        );
-
-      }
-    );
-
-    // WORD SELECTED
-    socket.on(
-      "wordSelected",
-      () => {
-
-        setWordChoices([]);
-
-      }
-    );
-
-    // CLEAR WORD
-    socket.on(
-      "clearWord",
-      () => {
-
-        setWord("");
-
-        setWordChoices([]);
-
-      }
-    );
-
-    // ROUND UPDATE
-    socket.on(
-      "roundUpdate",
-      ({
-        currentRound,
-        maxRounds
-      }) => {
-
-        setRound(
-          currentRound
-        );
-
-        setMaxRounds(
-          maxRounds
-        );
-
-      }
-    );
-
-    // GAME ENDED
-    socket.on(
-      "gameEnded",
-      (data) => {
-
-        setGameEnded(true);
-
-        setWinner(
-          data.winner
-        );
-
-        setLeaderboard(
-          data.leaderboard
-        );
-
-      }
-    );
-
-    // CORRECT GUESS
-    socket.on(
-      "correctGuess",
-      ({ player }) => {
-
-        console.log(
-          `${player} guessed correctly`
-        );
-
-      }
-    );
-
-    // CLEANUP
-    return () => {
-
-      socket.off("connect");
-
-      socket.off("disconnect");
-
-      socket.off("players");
-
-      socket.off("timerUpdate");
-
-      socket.off("yourTurn");
-
-      socket.off("newDrawer");
-
-      socket.off("wordChoices");
-
-      socket.off("wordSelected");
-
-      socket.off("clearWord");
-
-      socket.off("roundUpdate");
-
-      socket.off("gameEnded");
-
-      socket.off("correctGuess");
-
-      socket.off("roomState");
-
-    };
-
-    socket.on(
-  "roomState",
-  (data) => {
+  // YOUR TURN
+  const onYourTurn = (
+    newWord
+  ) => {
 
     console.log(
-      "ROOM STATE:",
-      data
+      "YOUR TURN",
+      newWord
     );
 
-    // PLAYERS
-    setPlayers(
-      data.players || []
+    setWord(newWord);
+
+  };
+
+  // NEW DRAWER
+  const onNewDrawer = ({
+    name,
+    id
+  }) => {
+
+    console.log(
+      "NEW DRAWER:",
+      name,
+      id
     );
 
-    // TIMER
-    setTimer(
-      data.timer || 60
+    setDrawer(name);
+
+    setCurrentDrawerId(id);
+
+  };
+
+  // WORD CHOICES
+  const onWordChoices = (
+    choices
+  ) => {
+
+    console.log(
+      "WORD CHOICES:",
+      choices
     );
 
-    // ROUND
-    setRound(
-      data.currentRound || 1
+    setWordChoices(
+      choices
     );
 
-    setMaxRounds(
-      data.maxRounds || 5
+  };
+
+  // WORD SELECTED
+  const onWordSelected = () => {
+
+    setWordChoices([]);
+
+  };
+
+  // CLEAR WORD
+  const onClearWord = () => {
+
+    setWord("");
+
+    setWordChoices([]);
+
+  };
+
+  // ROUND UPDATE
+  const onRoundUpdate = ({
+    currentRound,
+    maxRounds
+  }) => {
+
+    setRound(currentRound);
+
+    setMaxRounds(maxRounds);
+
+  };
+
+  // GAME ENDED
+  const onGameEnded = (
+    data
+  ) => {
+
+    setGameEnded(true);
+
+    setWinner(data.winner);
+
+    setLeaderboard(
+      data.leaderboard
     );
 
-    // DRAWER
-    if (data.currentDrawer) {
+  };
 
-      setDrawer(
-        data.currentDrawer.name
-      );
+  // REGISTER LISTENERS
+  socket.on("connect", onConnect);
 
-      setCurrentDrawerId(
-        data.currentDrawer.id
-      );
+  socket.on(
+    "disconnect",
+    onDisconnect
+  );
 
-    }
+  socket.on(
+    "players",
+    onPlayers
+  );
 
-    setRoomLoaded(true);
+  socket.on(
+    "timerUpdate",
+    onTimerUpdate
+  );
+
+  socket.on(
+    "yourTurn",
+    onYourTurn
+  );
+
+  // socket.on(
+  //   "newDrawer",
+  //   onNewDrawer
+  // );
+
+  socket.on(
+  "newDrawer",
+  ({
+    name,
+    id
+  }) => {
+    
+     console.log(
+      "NEW DRAWER EVENT:",
+      name,
+      id
+    );
+    setDrawer(name);
+
+    setCurrentDrawerId(id);
+
+    // IMPORTANT
+    setWord("");
+
+    setWordChoices([]);
 
   }
 );
 
-  }, []);
+  socket.on(
+    "wordChoices",
+    onWordChoices
+  );
+
+  socket.on(
+    "wordSelected",
+    onWordSelected
+  );
+
+  socket.on(
+    "clearWord",
+    onClearWord
+  );
+
+  socket.on(
+    "roundUpdate",
+    onRoundUpdate
+  );
+
+  socket.on(
+    "gameEnded",
+    onGameEnded
+  );
+
+  return () => {
+
+    socket.off(
+      "connect",
+      onConnect
+    );
+
+    socket.off(
+      "disconnect",
+      onDisconnect
+    );
+
+    socket.off(
+      "players",
+      onPlayers
+    );
+
+    socket.off(
+      "timerUpdate",
+      onTimerUpdate
+    );
+
+    socket.off(
+      "yourTurn",
+      onYourTurn
+    );
+
+    socket.off(
+      "newDrawer",
+      onNewDrawer
+    );
+
+    socket.off(
+      "wordChoices",
+      onWordChoices
+    );
+
+    socket.off(
+      "wordSelected",
+      onWordSelected
+    );
+
+    socket.off(
+      "clearWord",
+      onClearWord
+    );
+
+    socket.off(
+      "roundUpdate",
+      onRoundUpdate
+    );
+
+    socket.off(
+      "gameEnded",
+      onGameEnded
+    );
+
+  };
+
+}, []);
 
   // =========================
   // START GAME
@@ -545,7 +597,7 @@ function GameRoom() {
       {/* HEADER */}
       <div className="sticky top-0 z-50 backdrop-blur-lg bg-base-100/80 border-b border-base-300 shadow-md">
 
-        <div className="max-w-[1800px] mx-auto px-4 py-3">
+        <div className="max-w-[1800] mx-auto px-4 py-3">
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
@@ -678,7 +730,7 @@ function GameRoom() {
       </div>
 
       {/* MAIN */}
-      <div className="max-w-[1800px] mx-auto p-4">
+      <div className="max-w-[1800p] mx-auto p-4">
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
 
@@ -716,7 +768,6 @@ function GameRoom() {
             {
               isHost &&
               players.length >= 2 &&
-              !word &&
               !gameEnded && (
 
                 <button
@@ -835,6 +886,7 @@ function GameRoom() {
 
                 <Chat
                   roomId={roomId}
+                  isDrawer={isDrawer}
                 />
 
               </div>

@@ -13,7 +13,7 @@ import {
 function Home() {
 
   const navigate = useNavigate();
-
+  
   const {
     playerName,
     setPlayerName

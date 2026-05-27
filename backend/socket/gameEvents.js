@@ -1,3 +1,9 @@
+
+const {
+  rooms
+} = require(
+  "../rooms/roomManager"
+);
 const {
   findPublicRoom
 } = require(
@@ -21,7 +27,8 @@ const {
 const {
   startGame,
   selectWord,
-  playerGuessed
+  playerGuessed,
+  nextTurn
 } = require(
   "../game/gameLoop"
 );
@@ -96,13 +103,17 @@ io.to(room.roomId).emit(
   // CREATE PRIVATE ROOM
   // =========================
   socket.on(
-    "createPrivateRoom",
-    (playerName) => {
+  "createPrivateRoom",
+  ({
+    playerName,
+    settings
+  }) => {
 
       const room =
         createPrivateRoom(
           socket.id,
-          playerName
+          playerName,
+          settings
         );
 
       socket.join(room.roomId);
@@ -273,41 +284,112 @@ io.to(room.roomId).emit(
       }
 
       // CORRECT GUESS
-      if (
-        room.currentWord &&
-        message.toLowerCase().trim()
-        ===
-        room.currentWord
-          .toLowerCase()
-          .trim()
-      ) {
+      // CORRECT GUESS
+if (
+  room.currentWord &&
+  message.toLowerCase().trim()
+  ===
+  room.currentWord
+    .toLowerCase()
+    .trim()
+) {
 
-        const alreadyGuessed =
-  room.guessedPlayers.includes(
+  const alreadyGuessed =
+    room.guessedPlayers.includes(
+      socket.id
+    );
+
+  if (alreadyGuessed)
+    return;
+
+  // ADD PLAYER TO GUESSED
+  room.guessedPlayers.push(
     socket.id
   );
 
-if (alreadyGuessed)
+  // UPDATE SCORE
+  playerGuessed(
+    io,
+    room,
+    socket.id
+  );
+
+  // CHECK IF EVERYONE GUESSED
+const totalGuessers =
+  room.players.length - 1;
+
+if (
+  room.guessedPlayers.length >=
+  totalGuessers
+) {
+
+  // STOP TIMER
+  clearInterval(room.interval);
+
+  // SMALL DELAY
+  const {
+  nextTurn
+} = require(
+  "../game/gameLoop"
+);
+
+setTimeout(() => {
+
+  nextTurn(io, room);
+
+}, 2000);
+
+}
+
+  // SEND TO GUESSER ONLY
+  socket.emit(
+    "correctGuessSelf",
+    {
+      text:
+        `🎉 Correct! The word was "${room.currentWord}"`
+    }
+  );
+
+  // SEND TO DRAWER ONLY
+  io.to(
+    room.currentDrawer
+  ).emit(
+    "playerGuessed",
+    {
+      text:
+        `${playerName} guessed correctly`
+    }
+  );
+
+  // SEND TO EVERYONE ELSE
+  socket
+    .to(room.roomId)
+    .emit(
+      "correctGuess",
+      {
+        player: playerName
+      }
+    );
+
   return;
 
-playerGuessed(
-  io,
-  room,
-  socket.id
-);
-
-io.to(room.roomId).emit(
-  "correctGuess",
-  {
-    player: playerName
-  }
-);
-
-        return;
-
-      }
+}
 
       // NORMAL CHAT
+
+      // PREVENT WORD LEAKING
+if (
+  room.currentWord &&
+  message
+    .toLowerCase()
+    .includes(
+      room.currentWord.toLowerCase()
+    )
+) {
+
+  return;
+
+}
       io.to(room.roomId).emit(
         "receiveMessage",
         {
@@ -391,68 +473,177 @@ io.to(room.roomId).emit(
   // PLAYER DISCONNECT
   // =========================
   socket.on(
-    "disconnect",
-    () => {
+  "disconnect",
+  () => {
 
-      console.log(
-        "Disconnected:",
+    console.log(
+      "Disconnected:",
+      socket.id
+    );
+
+    for (
+      let roomId
+      in rooms
+    ) {
+
+      const room =
+        getRoom(roomId);
+
+      if (!room) continue;
+
+      const player =
+        room.players.find(
+          (p) =>
+            p.id === socket.id
+        );
+
+      if (!player)
+        continue;
+
+      const wasDrawer =
+        room.currentDrawer ===
+        socket.id;
+
+      // REMOVE PLAYER
+      removePlayer(
+        roomId,
         socket.id
       );
 
-      for (
-        let roomId
-        in io.sockets.adapter.rooms
+      // REMOVE FROM GUESSED
+      room.guessedPlayers =
+        room.guessedPlayers.filter(
+          (id) =>
+            id !== socket.id
+        );
+
+      // UPDATE PLAYERS
+      io.to(roomId).emit(
+        "players",
+        room.players
+      );
+
+      // UPDATE LEADERBOARD
+      io.to(roomId).emit(
+        "leaderboardUpdate",
+        room.players
+      );
+
+      // SYSTEM MESSAGE
+      io.to(roomId).emit(
+        "systemMessage",
+        {
+          text:
+            `${player.name} left the room`
+        }
+      );
+
+      // ROOM EMPTY
+      if (
+        room.players.length === 0
       ) {
 
-        const room =
-          getRoom(roomId);
-
-        if (!room) continue;
-
-        const exists =
-          room.players.some(
-            player =>
-              player.id === socket.id
-          );
-
-        if (!exists) continue;
-
-        removePlayer(
-          roomId,
-          socket.id
-        );
-
-        // UPDATE PLAYERS
-        io.to(roomId).emit(
-          "players",
-          room.players
-        );
-
-        // ROOM EMPTY
-        if (
-          room.players.length === 0
-        ) {
-
-          break;
-
-        }
-
-        // DRAWER LEFT
-        if (
-          room.currentDrawer ===
-          socket.id
-        ) {
-
-          startGame(io, room);
-
-        }
-
-        break;
+        return;
 
       }
 
+      // ONLY 1 PLAYER LEFT
+      if (
+        room.players.length === 1
+      ) {
+
+        room.gameStarted =
+          false;
+
+        clearInterval(
+          room.interval
+        );
+
+        io.to(roomId).emit(
+          "systemMessage",
+          {
+            text:
+              "Waiting for more players..."
+          }
+        );
+
+        return;
+
+      }
+
+      // IF DRAWER LEFT
+      if (wasDrawer) {
+
+        clearInterval(
+          room.interval
+        );
+
+        io.to(roomId).emit(
+          "systemMessage",
+          {
+            text:
+              "Drawer left. Next round starting..."
+          }
+        );
+
+        // setTimeout(() => {
+
+        //   startGame(
+        //     io,
+        //     room
+        //   );
+
+        // }, 2000);
+
+        setTimeout(() => {
+
+  nextTurn(io, room);
+
+}, 2000);
+
+      }
+
+      // IF EVERYONE GUESSED AFTER LEAVE
+      const guessers =
+        room.players.filter(
+          (p) =>
+            p.id !==
+            room.currentDrawer
+        );
+
+      if (
+        room.guessedPlayers
+          .length >=
+        guessers.length
+      ) {
+
+        clearInterval(
+          room.interval
+        );
+
+        // setTimeout(() => {
+
+        //   startGame(
+        //     io,
+        //     room
+        //   );
+
+        // }, 2000);
+
+        setTimeout(() => {
+
+  nextTurn(io, room);
+
+}, 2000);
+
+      }
+
+      break;
+
     }
-  );
+
+  }
+);
 
 
 

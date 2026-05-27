@@ -39,7 +39,17 @@ function findPublicRoom(
       return room;
 
     }
+    
+if (
+  room.players.length >=
+  room.maxPlayers
+) {
 
+  return {
+    error: "Room is full"
+  };
+
+}
     // ADD PLAYER
     room.players.push({
 

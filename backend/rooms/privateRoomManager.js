@@ -9,7 +9,8 @@ const {
 // CREATE PRIVATE ROOM
 function createPrivateRoom(
   socketId,
-  playerName
+  playerName,
+  settings
 ) {
 
   const roomCode =
@@ -21,6 +22,41 @@ function createPrivateRoom(
     playerName,
     true
   );
+
+  room.maxRounds =
+  settings.maxRounds;
+
+room.maxPlayers =
+  settings.maxPlayers;
+
+room.drawTime =
+  settings.drawTime;
+
+room.settings.difficulty =
+  settings.difficulty;
+
+room.settings.customWords =
+  settings.customWords
+    .split(",")
+    .map((w) => w.trim())
+    .filter(Boolean);
+
+
+    console.log({
+
+  rounds: room.maxRounds,
+
+  players: room.maxPlayers,
+
+  timer: room.drawTime,
+
+  difficulty:
+    room.settings.difficulty,
+
+  customWords:
+    room.settings.customWords
+
+});
 
   // ADD HOST
   room.players.push({

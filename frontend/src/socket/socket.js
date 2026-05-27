@@ -9,7 +9,9 @@ import { io } from "socket.io-client";
 const socket = io(
   "https://scribble-game-task.onrender.com/",
   {
-    transports: ["websocket"]
+    autoConnect: true,
+
+    reconnection: false,
   }
 );
 

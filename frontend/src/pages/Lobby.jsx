@@ -3,7 +3,7 @@ import {
   useEffect,
   useState
 } from "react";
-
+import CreateRoomModal from "../components/CreateRoomModal";
 import { useNavigate } from "react-router-dom";
 
 import socket from "../socket/socket";
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 function Lobby() {
-
+  const [openModal, setOpenModal] =useState(false);
   const navigate = useNavigate();
 
   const {
@@ -345,27 +345,20 @@ function Lobby() {
             </div>
 
             {/* CREATE PRIVATE */}
-            <button
-              className={`btn btn-secondary btn-lg rounded-2xl w-full mb-5 ${
-                loading
-                  ? "btn-disabled"
-                  : ""
-              }`}
-              onClick={createPrivate}
-            >
-
-              <Lock size={22} />
-
-              Create Private Room
-
-            </button>
+            <button     className={`btn btn-accent btn-lg rounded-2xl w-full bg-green-700 border-green-700 text-gray-300 mb-10 `}
+  onClick={() =>
+    setOpenModal(true)
+  }
+>
+  Create Private Room
+</button>
 
             {/* ROOM CODE */}
             <div className="form-control mb-5">
 
               <label className="label">
 
-                <span className="label-text text-lg font-semibold">
+                <span className="label-text text-lg font-semibold pr-2">
 
                   Room Code
 
@@ -409,8 +402,30 @@ function Lobby() {
 
       </div>
 
+    <CreateRoomModal
+  open={openModal}
+  onClose={() =>
+    setOpenModal(false)
+  }
+  onCreate={(settings) => {
+
+    socket.emit(
+      "createPrivateRoom",
+      {
+        playerName,
+        settings
+      }
+    );
+
+    setOpenModal(false);
+
+  }}
+/>
     </div>
-  );
+  
+  
+  
+);
 }
 
 export default Lobby;

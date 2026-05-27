@@ -10,6 +10,9 @@ function createRoom(
   rooms[roomId] = {
 
     // ROOM INFO
+
+    turnChanging: false,
+    
     roomId,
 
     isPrivate,
@@ -40,12 +43,14 @@ function createRoom(
     // ROUND SYSTEM
     currentRound: 1,
 
-    maxRounds: 5,
+    maxRounds:5,
 
     // TURN SYSTEM
-    drawerIndex: 0,
+    drawerIndex: -1,
 
     currentDrawer: null,
+
+    drawerId: null,
 
     // WORD SYSTEM
     currentWord: "",
@@ -66,6 +71,8 @@ function createRoom(
     messages: [],
     
     wordChoices: [],
+
+    drawnPlayers: [],
     
     // SETTINGS
     settings: {
