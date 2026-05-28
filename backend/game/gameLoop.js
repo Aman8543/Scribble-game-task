@@ -82,6 +82,7 @@ function startTurn(io, room) {
   );
 
   // RESET TURN STATE
+ 
   room.currentDrawer =
     drawer.id;
 
@@ -274,9 +275,7 @@ function playerGuessed(
     return;
   }
 
-  room.guessedPlayers.push(
-    socketId
-  );
+ 
 
   const player =
     room.players.find(

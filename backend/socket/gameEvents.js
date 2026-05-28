@@ -257,149 +257,149 @@ io.to(room.roomId).emit(
   // =========================
   // CHAT MESSAGE / GUESS
   // =========================
-  socket.on(
-    "sendMessage",
-    ({
-      roomId,
-      message,
-      playerName
-    }) => {
+//   socket.on(
+//     "sendMessage",
+//     ({
+//       roomId,
+//       message,
+//       playerName
+//     }) => {
 
-      const room =
-        getRoom(roomId);
+//       const room =
+//         getRoom(roomId);
 
-      if (!room) return;
+//       if (!room) return;
 
-      // EMPTY MESSAGE
-      if (!message.trim()) return;
+//       // EMPTY MESSAGE
+//       if (!message.trim()) return;
 
-      // DRAWER CANNOT GUESS
-      if (
-        socket.id ===
-        room.currentDrawer
-      ) {
+//       // DRAWER CANNOT GUESS
+//       if (
+//         socket.id ===
+//         room.currentDrawer
+//       ) {
 
-        return;
+//         return;
 
-      }
+//       }
 
-      // CORRECT GUESS
-      // CORRECT GUESS
-if (
-  room.currentWord &&
-  message.toLowerCase().trim()
-  ===
-  room.currentWord
-    .toLowerCase()
-    .trim()
-) {
+//       // CORRECT GUESS
+//       // CORRECT GUESS
+// if (
+//   room.currentWord &&
+//   message.toLowerCase().trim()
+//   ===
+//   room.currentWord
+//     .toLowerCase()
+//     .trim()
+// ) {
 
-  const alreadyGuessed =
-    room.guessedPlayers.includes(
-      socket.id
-    );
+//   const alreadyGuessed =
+//     room.guessedPlayers.includes(
+//       socket.id
+//     );
 
-  if (alreadyGuessed)
-    return;
+//   if (alreadyGuessed)
+//     return;
 
-  // ADD PLAYER TO GUESSED
-  room.guessedPlayers.push(
-    socket.id
-  );
+//   // ADD PLAYER TO GUESSED
+//   room.guessedPlayers.push(
+//     socket.id
+//   );
 
-  // UPDATE SCORE
-  playerGuessed(
-    io,
-    room,
-    socket.id
-  );
+//   // UPDATE SCORE
+//   playerGuessed(
+//     io,
+//     room,
+//     socket.id
+//   );
 
-  // CHECK IF EVERYONE GUESSED
-const totalGuessers =
-  room.players.length - 1;
+//   // CHECK IF EVERYONE GUESSED
+// const totalGuessers =
+//   room.players.length - 1;
 
-if (
-  room.guessedPlayers.length >=
-  totalGuessers
-) {
+// if (
+//   room.guessedPlayers.length >=
+//   totalGuessers
+// ) {
 
-  // STOP TIMER
-  clearInterval(room.interval);
+//   // STOP TIMER
+//   clearInterval(room.interval);
 
-  // SMALL DELAY
-  const {
-  nextTurn
-} = require(
-  "../game/gameLoop"
-);
+//   // SMALL DELAY
+//   const {
+//   nextTurn
+// } = require(
+//   "../game/gameLoop"
+// );
 
-setTimeout(() => {
+// setTimeout(() => {
 
-  nextTurn(io, room);
+//   nextTurn(io, room);
 
-}, 2000);
+// }, 2000);
 
-}
+// }
 
-  // SEND TO GUESSER ONLY
-  socket.emit(
-    "correctGuessSelf",
-    {
-      text:
-        `🎉 Correct! The word was "${room.currentWord}"`
-    }
-  );
+//   // SEND TO GUESSER ONLY
+//   socket.emit(
+//     "correctGuessSelf",
+//     {
+//       text:
+//         `🎉 Correct! The word was "${room.currentWord}"`
+//     }
+//   );
 
-  // SEND TO DRAWER ONLY
-  io.to(
-    room.currentDrawer
-  ).emit(
-    "playerGuessed",
-    {
-      text:
-        `${playerName} guessed correctly`
-    }
-  );
+//   // SEND TO DRAWER ONLY
+//   io.to(
+//     room.currentDrawer
+//   ).emit(
+//     "playerGuessed",
+//     {
+//       text:
+//         `${playerName} guessed correctly`
+//     }
+//   );
 
-  // SEND TO EVERYONE ELSE
-  socket
-    .to(room.roomId)
-    .emit(
-      "correctGuess",
-      {
-        player: playerName
-      }
-    );
+//   // SEND TO EVERYONE ELSE
+//   socket
+//     .to(room.roomId)
+//     .emit(
+//       "correctGuess",
+//       {
+//         player: playerName
+//       }
+//     );
 
-  return;
+//   return;
 
-}
+// }
 
-      // NORMAL CHAT
+//       // NORMAL CHAT
 
-      // PREVENT WORD LEAKING
-if (
-  room.currentWord &&
-  message
-    .toLowerCase()
-    .includes(
-      room.currentWord.toLowerCase()
-    )
-) {
+//       // PREVENT WORD LEAKING
+// if (
+//   room.currentWord &&
+//   message
+//     .toLowerCase()
+//     .includes(
+//       room.currentWord.toLowerCase()
+//     )
+// ) {
 
-  return;
+//   return;
 
-}
-      io.to(room.roomId).emit(
-        "receiveMessage",
-        {
-          playerName,
-          message
-        }
-      );
+// }
+//       io.to(room.roomId).emit(
+//         "receiveMessage",
+//         {
+//           playerName,
+//           message
+//         }
+//       );
 
-    }
-  );
+//     }
+//   );
 
   // =========================
   // DRAWING
